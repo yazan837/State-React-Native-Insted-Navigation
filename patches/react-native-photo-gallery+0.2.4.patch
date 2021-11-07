@@ -1,0 +1,517 @@
+diff --git a/node_modules/react-native-photo-gallery/arrow1.png b/node_modules/react-native-photo-gallery/arrow1.png
+new file mode 100644
+index 0000000..6e5e682
+Binary files /dev/null and b/node_modules/react-native-photo-gallery/arrow1.png differ
+diff --git a/node_modules/react-native-photo-gallery/arrow2.png b/node_modules/react-native-photo-gallery/arrow2.png
+new file mode 100644
+index 0000000..04cb2b0
+Binary files /dev/null and b/node_modules/react-native-photo-gallery/arrow2.png differ
+diff --git a/node_modules/react-native-photo-gallery/index.js b/node_modules/react-native-photo-gallery/index.js
+index 493d1f5..c652e12 100644
+--- a/node_modules/react-native-photo-gallery/index.js
++++ b/node_modules/react-native-photo-gallery/index.js
+@@ -1,14 +1,21 @@
+-import { ActivityIndicator, Dimensions, FlatList, View } from "react-native";
+-import React, { Component } from "react";
+-import PropTypes from "prop-types";
+-import { Pagination, Slide } from "./src";
++import {
++  ActivityIndicator,
++  Dimensions,
++  FlatList,
++  View,
++  Image,
++  TouchableOpacity,
++} from 'react-native';
++import React, {Component} from 'react';
++import PropTypes from 'prop-types';
++import {Pagination, Slide} from './src';
+ 
+ export default class Gallery extends Component {
+   constructor(props) {
+     super(props);
+-    this.sendCurrentImageInfo(this.props.data[0]);
++    this.sendCurrentImageInfo(this.props.data[1]);
+     this.state = {
+-      index: 0
++      index: 0,
+     };
+     if (this.props.initialIndex) {
+       setTimeout(() => {
+@@ -26,24 +33,24 @@ export default class Gallery extends Component {
+     const viewSize = e.nativeEvent.layoutMeasurement;
+     const pageNum = Math.floor(contentOffset.x / viewSize.width);
+     if (pageNum !== this.state.index) {
+-      this.setState({ index: pageNum });
++      this.setState({index: pageNum});
+     }
+   };
+ 
+   getItemLayout = (data, index) => {
+-    const { width } = this.state;
++    const {width} = this.state;
+     return {
+       length: width,
+       offset: width * index,
+-      index
++      index,
+     };
+   };
+ 
+   goTo = index => {
+     this.sendCurrentImageInfo(this.props.data[index]);
+-    this.setState({ index });
++    this.setState({index});
+     this.swiper.scrollToOffset({
+-      offset: Dimensions.get("window").width * index
++      offset: 700 * index,
+     });
+   };
+ 
+@@ -52,17 +59,14 @@ export default class Gallery extends Component {
+   };
+ 
+   render() {
+-    const backgroundColor = this.props.backgroundColor || "#000";
+     const data = this.props.data || [];
++    const visible = this.props.visible || null;
++    let opacity = visible && this.state.index == 1 ? 0 : 1;
++    console.log('kkkk', opacity);
+     return (
+-      <View
+-        onLayout={this.onLayout}
+-        style={{
+-          ...styles.container,
+-          backgroundColor
+-        }}
+-      >
++      <View onLayout={this.onLayout}>
+         {!data.length && <ActivityIndicator style={styles.loader} />}
++
+         <FlatList
+           onLayout={this.onLayout}
+           style={styles.flatList}
+@@ -76,15 +80,65 @@ export default class Gallery extends Component {
+           getItemLayout={this.getItemLayout}
+           renderItem={img => this._renderImage(img)}
+           keyExtractor={item => item.id}
++          showsHorizontalScrollIndicator={false}
+         />
+-
+         <Pagination
+           index={this.state.index}
+           data={data}
+-          initialPaginationSize={this.props.initialPaginationSize || 10}
++          initialPaginationSize={this.props.initialPaginationSize || 2}
+           goTo={this.goTo}
+-          backgroundColor={backgroundColor}
+         />
++        <TouchableOpacity
++          onPress={() =>
++            this.state.index != 2
++              ? (this.swiper.scrollToOffset({
++                  offset: 700 + 700 * this.state.index,
++                }),
++                this.setState({
++                  index: this.state.index + 1,
++                }))
++              : null
++          }
++          disabled={opacity === 0}
++          style={[
++            {
++              position: 'absolute',
++              alignSelf: 'flex-end',
++              top: 225,
++              paddingEnd: 10,
++              opacity: visible && this.state.index === 1 ? 0 : 1,
++            },
++            {opacity},
++          ]}>
++          <Image
++            resizeMode="center"
++            source={require('./arrow1.png')}
++            style={{width: 20, height: 60}}
++          />
++        </TouchableOpacity>
++        <TouchableOpacity
++          onPress={() =>
++            this.state.index != 0
++              ? (this.swiper.scrollToOffset({
++                  offset: (this.state.index - 1) * 700,
++                }),
++                this.setState({
++                  index: this.state.index - 1,
++                }))
++              : null
++          }
++          style={{
++            position: 'absolute',
++            alignSelf: 'flex-start',
++            top: 225,
++            paddingStart: 10,
++          }}>
++          <Image
++            resizeMode="center"
++            source={require('./arrow2.png')}
++            style={{width: 20, height: 60}}
++          />
++        </TouchableOpacity>
+       </View>
+     );
+   }
+@@ -95,27 +149,27 @@ Gallery.propTypes = {
+   data: PropTypes.arrayOf((propValue, key) => {
+     if (!propValue[key].id || !propValue[key].image) {
+       return new Error(
+-        'Data prop is invalid. It must be an object containing "id" and "image" keys.'
++        'Data prop is invalid. It must be an object containing "id" and "image" keys.',
+       );
+     }
+   }),
+-  setCurrentImage: PropTypes.func
++  setCurrentImage: PropTypes.func,
+ };
+ 
+ const styles = {
+   container: {
+     flex: 1,
+-    flexDirection: "column",
+-    justifyContent: "space-between"
++    flexDirection: 'column',
++    justifyContent: 'space-between',
+   },
+   flatList: {
+     flex: 1,
+-    width: Dimensions.get("window").width,
+-    alignSelf: "stretch"
++    width: 700,
++    alignSelf: 'stretch',
+   },
+   loader: {
+-    position: "absolute",
+-    top: Dimensions.get("window").height / 2 - 10,
+-    left: Dimensions.get("window").width / 2 - 10
+-  }
++    position: 'absolute',
++    top: Dimensions.get('window').height / 2 - 10,
++    left: Dimensions.get('window').width / 2 - 10,
++  },
+ };
+diff --git a/node_modules/react-native-photo-gallery/src/Pagination/Pagination.js b/node_modules/react-native-photo-gallery/src/Pagination/Pagination.js
+index 959fa0a..c2b85bb 100644
+--- a/node_modules/react-native-photo-gallery/src/Pagination/Pagination.js
++++ b/node_modules/react-native-photo-gallery/src/Pagination/Pagination.js
+@@ -1,6 +1,6 @@
+-import { Dimensions, Platform, FlatList, StyleSheet } from "react-native";
+-import React, { Component } from "react";
+-import SwiperThumb from "./SwiperThumb";
++import {Dimensions, Platform, FlatList, StyleSheet} from 'react-native';
++import React, {Component} from 'react';
++import SwiperThumb from './SwiperThumb';
+ 
+ export class Pagination extends Component {
+   constructor(props) {
+@@ -9,27 +9,27 @@ export class Pagination extends Component {
+   }
+ 
+   componentDidUpdate() {
+-    this.scrollTo(this.props.index);
++    this.scrollTo(this.props.index || null);
+     this.setContentInset();
+   }
+ 
+   scrollTo = index => {
+     if (index < 0) return;
+-    this.list.scrollToIndex({ animated: true, index });
++    this.list.scrollToIndex({animated: true, index});
+   };
+ 
+   setContentInset() {
+-    this.contentInset = Dimensions.get("window").width / 2 - 32;
++    this.contentInset = Dimensions.get('window').width / 2 - 32;
+     this.insetOffSetParams = Platform.select({
+       ios: {
+         contentInset: {
+           left: this.contentInset,
+-          right: this.contentInset
++          right: this.contentInset,
+         },
+-        contentOffset: { x: -this.contentInset },
+-        contentContainerStyle: s.subContainer
++        contentOffset: {x: -this.contentInset},
++        contentContainerStyle: s.subContainer,
+       },
+-      android: {}
++      android: {},
+     });
+   }
+ 
+@@ -37,7 +37,7 @@ export class Pagination extends Component {
+     this.props.goTo(index);
+   };
+ 
+-  renderItem = ({ item, index }) => {
++  renderItem = ({item, index}) => {
+     return (
+       <SwiperThumb
+         {...item}
+@@ -57,21 +57,16 @@ export class Pagination extends Component {
+         ref={flatList => {
+           this.list = flatList;
+         }}
+-        initialScrollIndex={0}
++        keyExtractor={(_, index) => index.toString()}
++        initialScrollIndex={1}
+         data={this.props.data}
+         renderItem={this.renderItem}
+         getItemLayout={(data, index) => ({
+           length: 64,
+           offset: 64 * index,
+-          index
++          index,
+         })}
+-        style={[
+-          s.container,
+-          {
+-            backgroundColor: this.props.backgroundColor,
+-            width: Dimensions.get("window").width
+-          }
+-        ]}
++        style={s.container}
+         overScrollMode="never"
+         alwaysBounceHorizontal={false}
+         {...this.insetOffSetParams}
+@@ -81,22 +76,25 @@ export class Pagination extends Component {
+ }
+ 
+ const isIphoneXorAbove = () => {
+-  const d = Dimensions.get("window");
++  const d = Dimensions.get('window');
+   return (
+-    Platform.OS === "ios" &&
++    Platform.OS === 'ios' &&
+     (d.height === 812 || d.width === 812 || d.height === 896 || d.width === 896)
+   );
+ };
+ 
+ const s = StyleSheet.create({
+   container: {
+-    position: "absolute",
+-    bottom: isIphoneXorAbove() ? 30 : 0,
+-    height: 64
++    position: 'absolute',
++    height: 150,
++    left: 75,
++    zIndex: 4,
++    marginTop: 460,
++    marginStart: 160,
+   },
+   subContainer: {
+-    flexDirection: "row",
+-    justifyContent: "center",
+-    alignItems: "center"
+-  }
++    flexDirection: 'row',
++    justifyContent: 'center',
++    alignItems: 'center',
++  },
+ });
+diff --git a/node_modules/react-native-photo-gallery/src/Pagination/SwiperThumb.js b/node_modules/react-native-photo-gallery/src/Pagination/SwiperThumb.js
+index f0ee6c9..4b3821a 100644
+--- a/node_modules/react-native-photo-gallery/src/Pagination/SwiperThumb.js
++++ b/node_modules/react-native-photo-gallery/src/Pagination/SwiperThumb.js
+@@ -1,8 +1,8 @@
+-import React from "react";
+-import PropTypes from "prop-types";
+-import { TouchableOpacity, Image, StyleSheet } from "react-native";
++import React from 'react';
++import PropTypes from 'prop-types';
++import {TouchableOpacity, Image, StyleSheet} from 'react-native';
+ 
+-const SwiperThumb = ({ navigate, index, data, active }) => {
++const SwiperThumb = ({navigate, index, data, active}) => {
+   goToSlide = () => {
+     navigate(index);
+   };
+@@ -10,7 +10,7 @@ const SwiperThumb = ({ navigate, index, data, active }) => {
+   return (
+     <TouchableOpacity style={styles.container} onPress={goToSlide}>
+       <Image
+-        style={{ ...styles.thumb, opacity: active ? 1 : 0.6 }}
++        style={[styles.thumb, {opacity: active ? 1 : 0.6}]}
+         source={data[index].thumb || data[index].image}
+       />
+     </TouchableOpacity>
+@@ -21,20 +21,21 @@ SwiperThumb.propTypes = {
+   navigate: PropTypes.func,
+   index: PropTypes.number,
+   active: PropTypes.boolean,
+-  data: PropTypes.object
++  data: PropTypes.object,
+ };
+ 
+ const styles = StyleSheet.create({
+   container: {
+-    width: 64,
+-    justifyContent: "center",
+-    alignItems: "center",
+-    height: 64
++    width: 100,
++    height: 75,
++    zIndex: 2,
++    justifyContent: 'center',
++    alignItems: 'center',
+   },
+   thumb: {
+-    width: 64,
+-    height: 64
+-  }
++    width: 90,
++    height: 75,
++  },
+ });
+ 
+ export default SwiperThumb;
+diff --git a/node_modules/react-native-photo-gallery/src/Slide.js b/node_modules/react-native-photo-gallery/src/Slide.js
+index 95250b8..265d46c 100644
+--- a/node_modules/react-native-photo-gallery/src/Slide.js
++++ b/node_modules/react-native-photo-gallery/src/Slide.js
+@@ -1,19 +1,20 @@
+-import React from "react";
++import React from 'react';
+ import {
+   ActivityIndicator,
+   Platform,
+   Image,
+   View,
+   ScrollView,
+-  Dimensions
+-} from "react-native";
+-import PhotoView from "react-native-photo-view";
+-import PropTypes from "prop-types";
++  Dimensions,
++  TouchableOpacity,
++} from 'react-native';
++import PhotoView from 'react-native-photo-view';
++import PropTypes from 'prop-types';
+ 
+-const Slide = ({ item }) => {
++const Slide = ({item}) => {
+   const inside = {
+-    width: Dimensions.get("window").width,
+-    height: Dimensions.get("window").height - 128
++    width: 700,
++    height: 450,
+   };
+ 
+   return (
+@@ -21,62 +22,71 @@ const Slide = ({ item }) => {
+       style={[
+         styles.slideC,
+         {
+-          width: Dimensions.get("window").width,
+-          height: Dimensions.get("window").height
+-        }
+-      ]}
+-    >
+-      <ActivityIndicator style={styles.loader} />
+-      {Platform.OS === "android" ? (
++          width: 700,
++          height: 450,
++        },
++      ]}>
++      {/* <ActivityIndicator style={styles.loader} /> */}
++      {/* {Platform.OS === 'android' ? (
+         <PhotoView
+           source={item.image}
+           maximumZoomScale={3}
+           zoomScale={1}
+-          androidScaleType="centerInside"
++          androidScaleType="fitStart"
+           resizeMode="contain"
+-          style={[styles.scrollViewC, inside]}
++          style={styles.scrollViewC}
++          fadeDuration={0}
+         />
+-      ) : (
+-        <ScrollView
+-          maximumZoomScale={4}
+-          zoomScale={1}
+-          style={[{ flex: 1 }, inside]}
+-          contentContainerStyle={styles.scrollViewContainer}
+-          showsVerticalScrollIndicator={false}
+-        >
+-          <Image
+-            source={item.image}
+-            accessible={true}
+-            style={inside}
+-            resizeMode="contain"
+-          />
+-        </ScrollView>
+-      )}
+-      {item.overlay}
++      ) : ( */}
++      <ScrollView
++        maximumZoomScale={4}
++        zoomScale={1}
++        // style={[inside]}
++        contentContainerStyle={styles.scrollViewContainer}
++        showsVerticalScrollIndicator={false}>
++        <Image
++          source={item.image}
++          accessible={true}
++          style={inside}
++          resizeMode="stretch"
++          style={{height: 500, width: 700}}
++        />
++      </ScrollView>
++      {/* )} */}
++
++      {/* {item.overlay} */}
+     </View>
+   );
+ };
+ 
+ Slide.propTypes = {
+-  item: PropTypes.object.isRequired
++  item: PropTypes.object.isRequired,
+ };
+ 
+ const styles = {
+   slideC: {
+     flex: 1,
+-    alignItems: "center",
+-    justifyContent: "center"
++    alignItems: 'center',
++    justifyContent: 'center',
+   },
+   scrollViewC: {
+-    alignItems: "center",
+-    top: Platform.OS === "android" ? -32 : 70,
+-    justifyContent: "center"
++    alignItems: 'center',
++    top: Platform.OS === 'android' ? -32 : 70,
++    justifyContent: 'center',
++    width: 700,
++    height: 400,
+   },
+   loader: {
+-    position: "absolute",
+-    top: Dimensions.get("window").height / 2 - 10,
+-    left: Dimensions.get("window").width / 2 - 10
+-  }
++    top: Dimensions.get('window').height / 2 - 10,
++    left: Dimensions.get('window').width / 2 - 10,
++  },
++  scrollViewContainer: {
++    width: 700,
++    height: 500,
++    alignItems: 'center',
++    justifyContent: 'center',
++    flex: 1,
++  },
+ };
+ 
+-export { Slide };
++export {Slide};
